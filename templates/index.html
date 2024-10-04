@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Attendance System</title>
+</head>
+<body>
+    <h1>Face Recognition Attendance System</h1>
+    <video id="video" width="320" height="240" autoplay></video>
+    <button id="capture">Capture Photo</button>
+    <h2>Attendance Records</h2>
+    <ul id="attendance-list"></ul>
+
+    <script>
+        const video = document.getElementById('video');
+        const captureButton = document.getElementById('capture');
+        const attendanceList = document.getElementById('attendance-list');
+
+        // Access the device camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing the camera: ", err);
+            });
+
+        captureButton.addEventListener('click', async () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 320;
+            canvas.height = 240;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/png').split(',')[1];
+
+            console.log(imageData);  // Debug statement: log the captured image data
+
+            const response = await fetch('/attendance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: imageData }),
+            });
+
+            const result = await response.json();
+            console.log(result);  // Log the response from the server
+
+            attendanceList.innerHTML = '';
+            result.attendance.forEach(name => {
+                const li = document.createElement('li');
+                li.textContent = name;
+                attendanceList.appendChild(li);
+            });
+        });
+    </script>
+</body>
+</html>
